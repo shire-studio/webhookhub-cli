@@ -31,3 +31,16 @@ type WebhookEvent struct {
 	Body         string              `json:"body"`
 	ReceivedAt   string              `json:"received_at"`
 }
+
+// LocalResponseInput is the body of POST /api/cli/local-responses/{id}.
+//
+// Either Status > 0 (the local server replied with an HTTP status) or
+// Error != "" (the request never completed). Both can be present
+// together if the local server replied but the body read errored.
+type LocalResponseInput struct {
+	Status     int               `json:"status,omitempty"`
+	Headers    map[string]string `json:"headers,omitempty"`
+	Body       string            `json:"body,omitempty"`
+	DurationMs int64             `json:"duration_ms,omitempty"`
+	Error      string            `json:"error,omitempty"`
+}
