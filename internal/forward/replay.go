@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/shire-studio/webhookhub-cli/internal/api"
@@ -129,7 +130,13 @@ func classifyDialError(err error) string {
 	if errors.As(err, &dnsErr) {
 		return "dns_failure"
 	}
-	if strings.Contains(err.Error(), "connection refused") {
+	if errors.Is(err, syscall.ECONNREFUSED) {
+		return "connection_refused"
+	}
+	msg := err.Error()
+	// Linux/macOS: "connection refused".
+	// Windows: "No connection could be made because the target machine actively refused it."
+	if strings.Contains(msg, "connection refused") || strings.Contains(msg, "actively refused") {
 		return "connection_refused"
 	}
 	return "transport_error"
