@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"os"
 	"time"
 
 	"github.com/shire-studio/webhookhub-cli/internal/api"
 	"github.com/shire-studio/webhookhub-cli/internal/auth"
+	"github.com/shire-studio/webhookhub-cli/internal/config"
 	"github.com/shire-studio/webhookhub-cli/internal/forward"
 	"github.com/spf13/cobra"
 )
@@ -42,14 +44,37 @@ $XDG_CONFIG_HOME/webhookhub/forwards.yaml):
 		defer cancel()
 
 		if len(args) == 0 {
-			// Multi-endpoint mode (Task 8 fills this in)
+			// Multi-endpoint: load webhookhub.yaml from CWD, fall back to
+			// $XDG_CONFIG_HOME/webhookhub/forwards.yaml.
+			cwd, err := os.Getwd()
+			if err != nil {
+				return err
+			}
+			configHome, err := os.UserConfigDir()
+			if err != nil {
+				return err
+			}
+
+			mappings, source, err := config.LoadForwards(cwd, configHome)
+			if err != nil {
+				return err
+			}
+
+			asMap := make(map[string]string, len(mappings))
+			for _, m := range mappings {
+				asMap[m.Slug] = m.To
+			}
+
+			fmt.Fprintf(c.OutOrStdout(), "Loaded %d forward mappings from %s\n", len(mappings), source)
+
 			return runForwardMulti(forwardOpts{
-				BaseURL: apiBaseURL(),
-				Store:   store,
-				Timeout: forwardTimeout,
-				Verbose: forwardVerbose,
-				Out:     c.OutOrStdout(),
-				Ctx:     ctx,
+				BaseURL:  apiBaseURL(),
+				Store:    store,
+				Mappings: asMap,
+				Timeout:  forwardTimeout,
+				Verbose:  forwardVerbose,
+				Out:      c.OutOrStdout(),
+				Ctx:      ctx,
 			})
 		}
 
@@ -128,9 +153,50 @@ func runForwardSingle(opts forwardOpts) error {
 	return streamLoop(opts.Ctx, client, []string{opts.Slug}, mappings, opts)
 }
 
-// runForwardMulti is implemented in Task 8.
+// runForwardMulti handles `webhookhub forward` with no slug arg — the
+// mappings come from webhookhub.yaml. Each yaml-listed slug is validated
+// against the user's actual endpoints up-front so typos surface immediately.
 func runForwardMulti(opts forwardOpts) error {
-	return errors.New("multi-endpoint mode is implemented in Task 8")
+	cfg, err := opts.Store.Load()
+	if err != nil {
+		return err
+	}
+
+	if len(opts.Mappings) == 0 {
+		// CLI plumbing fills this in by loading webhookhub.yaml. If we got
+		// here with an empty mapping, that's a logic bug.
+		return errors.New("no forward mappings configured (expected webhookhub.yaml)")
+	}
+
+	client := api.New(opts.BaseURL, cfg.Token)
+
+	endpoints, err := client.Endpoints(opts.Ctx)
+	if err != nil {
+		if errors.Is(err, api.ErrUnauthorized) {
+			return errors.New("token rejected by server (run `webhookhub auth login`)")
+		}
+		return fmt.Errorf("list endpoints: %w", err)
+	}
+	known := map[string]struct{}{}
+	for _, e := range endpoints {
+		known[e.Slug] = struct{}{}
+	}
+
+	parsed := make(map[string]*url.URL, len(opts.Mappings))
+	slugs := make([]string, 0, len(opts.Mappings))
+	for slug, raw := range opts.Mappings {
+		if _, ok := known[slug]; !ok {
+			return fmt.Errorf("endpoint slug %q not found in your account", slug)
+		}
+		t, err := url.Parse(raw)
+		if err != nil {
+			return fmt.Errorf("parse target URL for %s (%q): %w", slug, raw, err)
+		}
+		parsed[slug] = t
+		slugs = append(slugs, slug)
+	}
+
+	return streamLoop(opts.Ctx, client, slugs, parsed, opts)
 }
 
 // streamLoop is the reconnect-with-backoff wrapper around api.Client.Stream.
