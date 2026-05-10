@@ -49,8 +49,8 @@ func (l *Logger) LogReplay(prefix string, ev api.WebhookEvent, target *url.URL, 
 		path = "/"
 	}
 
-	switch {
-	case res.ErrorCode == "":
+	switch res.ErrorCode {
+	case "":
 		fmt.Fprintf(l.out, "[%s] %s %s → %d %s %dms\n", tag, ev.Method, path, res.Status, statusText(res.Status), res.DurationMs)
 	default:
 		fmt.Fprintf(l.out, "[%s] %s %s ✗ %s\n", tag, ev.Method, path, errorText(res.ErrorCode))
