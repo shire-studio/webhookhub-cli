@@ -1,5 +1,6 @@
 # Binaries
 /webhookhub
+# GoReleaser snapshot/release output
 /dist/
 
 # Test/coverage

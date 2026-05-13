@@ -2,18 +2,19 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 )
 
-// Version is the CLI version. Overridden via -ldflags at build time.
-//
-//	go build -ldflags "-X github.com/shire-studio/webhookhub-cli/internal/cmd.Version=v0.1.0" \
-//	         -o webhookhub ./cmd/webhookhub
-//
-// Plan 5 (distribution) wires this into GoReleaser.
-var Version = "dev"
+// Version, Commit, BuildDate are injected at build time by GoReleaser via -ldflags.
+// See .goreleaser.yaml.
+var (
+	Version   = "dev"
+	Commit    = "none"
+	BuildDate = "unknown"
+)
 
 const defaultAPIURL = "https://webhookhub.dev"
 
@@ -21,9 +22,13 @@ const defaultAPIURL = "https://webhookhub.dev"
 var rootCmd = &cobra.Command{
 	Use:           "webhookhub",
 	Short:         "Tunnel webhooks captured at a stable WebhookHub URL down to your local server",
-	Version:       Version,
-	SilenceUsage:  true, // don't dump usage on every error
-	SilenceErrors: true, // we print to stderr ourselves in main()
+	Version:       fmt.Sprintf("%s (commit %s, built %s)", Version, Commit, BuildDate),
+	SilenceUsage:  true,
+	SilenceErrors: true,
+}
+
+func init() {
+	rootCmd.SetVersionTemplate("{{.Use}} {{.Version}}\n")
 }
 
 // Execute runs the root command. Called by cmd/webhookhub/main.go.

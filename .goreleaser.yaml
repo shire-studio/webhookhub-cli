@@ -1,0 +1,92 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+version: 2
+
+project_name: webhookhub
+
+before:
+  hooks:
+    - go mod tidy
+    - go test ./...
+
+builds:
+  - id: webhookhub
+    main: ./cmd/webhookhub
+    binary: webhookhub
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X github.com/shire-studio/webhookhub-cli/internal/cmd.Version={{ .Version }}
+      - -X github.com/shire-studio/webhookhub-cli/internal/cmd.Commit={{ .ShortCommit }}
+      - -X github.com/shire-studio/webhookhub-cli/internal/cmd.BuildDate={{ .Date }}
+
+archives:
+  - id: default
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+    formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - LICENSE
+      - README.md
+
+checksum:
+  name_template: "{{ .ProjectName }}_{{ .Version }}_checksums.txt"
+  algorithm: sha256
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-snapshot"
+
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - "^docs:"
+      - "^chore:"
+      - "^test:"
+
+release:
+  github:
+    owner: shire-studio
+    name: webhookhub-cli
+  prerelease: auto
+  draft: false
+  name_template: "{{ .ProjectName }} {{ .Version }}"
+
+brews:
+  - name: webhookhub
+    repository:
+      owner: shire-studio
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    directory: Formula
+    homepage: "https://webhookhub.dev"
+    description: "Tunnel webhooks captured at a stable WebhookHub URL down to your local server"
+    license: "MIT"
+    install: |
+      bin.install "webhookhub"
+    test: |
+      system "#{bin}/webhookhub", "--version"
+
+scoops:
+  - name: webhookhub
+    repository:
+      owner: shire-studio
+      name: scoop-bucket
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    directory: bucket
+    homepage: "https://webhookhub.dev"
+    description: "Tunnel webhooks captured at a stable WebhookHub URL down to your local server"
+    license: "MIT"
