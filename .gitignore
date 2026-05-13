@@ -10,3 +10,6 @@ coverage.txt
 .vscode/
 .idea/
 .DS_Store
+
+# GoReleaser local output
+dist/
