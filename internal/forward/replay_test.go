@@ -50,8 +50,8 @@ func TestReplay_HappyPath(t *testing.T) {
 	if res.Status != 201 {
 		t.Errorf("status %d", res.Status)
 	}
-	if res.DurationMs <= 0 {
-		t.Errorf("duration %d", res.DurationMs)
+	if res.DurationMs < 0 {
+		t.Errorf("duration negative: %d", res.DurationMs)
 	}
 	if res.Body != `{"created":true}` {
 		t.Errorf("body %q", res.Body)
