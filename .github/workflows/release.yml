@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: write    # GoReleaser needs to push a release on this repo
-  packages: write    # for completeness; future container push support
 
 jobs:
   goreleaser:

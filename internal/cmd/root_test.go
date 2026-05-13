@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"strings"
+	"bytes"
 	"testing"
 )
 
@@ -12,19 +12,29 @@ func TestVersionVarsDefault(t *testing.T) {
 	if Commit != "none" {
 		t.Errorf("Commit default = %q, want \"none\"", Commit)
 	}
-	if Date != "unknown" {
-		t.Errorf("Date default = %q, want \"unknown\"", Date)
+	if BuildDate != "unknown" {
+		t.Errorf("BuildDate default = %q, want \"unknown\"", BuildDate)
 	}
 }
 
-func TestVersionTemplateReferencesAllThreeVars(t *testing.T) {
-	tmpl := rootCmd.VersionTemplate()
-	if tmpl == "" {
-		t.Fatal("VersionTemplate is empty")
+func TestVersionFlagOutput(t *testing.T) {
+	var buf bytes.Buffer
+	rootCmd.SetOut(&buf)
+	rootCmd.SetErr(&buf)
+	rootCmd.SetArgs([]string{"--version"})
+	t.Cleanup(func() {
+		rootCmd.SetArgs(nil)
+		rootCmd.SetOut(nil)
+		rootCmd.SetErr(nil)
+	})
+
+	if err := rootCmd.Execute(); err != nil {
+		t.Fatalf("execute --version: %v", err)
 	}
-	for _, s := range []string{".Version", Commit, Date} {
-		if !strings.Contains(tmpl, s) {
-			t.Errorf("VersionTemplate missing %q substring: %s", s, tmpl)
-		}
+
+	got := buf.String()
+	want := "webhookhub dev (commit none, built unknown)\n"
+	if got != want {
+		t.Errorf("--version output\n got: %q\nwant: %q", got, want)
 	}
 }

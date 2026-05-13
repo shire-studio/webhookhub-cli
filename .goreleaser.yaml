@@ -27,7 +27,7 @@ builds:
       - -s -w
       - -X github.com/shire-studio/webhookhub-cli/internal/cmd.Version={{ .Version }}
       - -X github.com/shire-studio/webhookhub-cli/internal/cmd.Commit={{ .ShortCommit }}
-      - -X github.com/shire-studio/webhookhub-cli/internal/cmd.Date={{ .Date }}
+      - -X github.com/shire-studio/webhookhub-cli/internal/cmd.BuildDate={{ .Date }}
 
 archives:
   - id: default

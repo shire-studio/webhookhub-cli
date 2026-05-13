@@ -1,6 +1,6 @@
 # Binaries
 /webhookhub
-/dist/
+/dist/  # GoReleaser snapshot/release output
 
 # Test/coverage
 *.out
@@ -10,6 +10,3 @@ coverage.txt
 .vscode/
 .idea/
 .DS_Store
-
-# GoReleaser local output
-dist/
