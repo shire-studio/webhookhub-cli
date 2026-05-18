@@ -4,12 +4,37 @@ The official CLI for [WebhookHub](https://webhookhub.dev). Stream webhooks captu
 
 ## Status
 
-`v0.2.0-alpha` — auth, endpoint listing, and webhook forwarding all work. Distribution (Homebrew, Scoop, install.sh) lands in the next release.
+`v1.0.0` — production-ready. Distributed via Homebrew, Scoop, and a one-line shell installer.
 
 ## Install
 
+### macOS & Linux — Homebrew
+
 ```bash
-# Until distribution lands, install from source:
+brew install shire-studio/tap/webhookhub
+```
+
+### Any POSIX shell
+
+```bash
+curl -fsSL https://webhookhub.dev/install.sh | sh
+```
+
+Environment overrides:
+
+- `WEBHOOKHUB_VERSION=v1.0.0` — pin a specific version.
+- `WEBHOOKHUB_INSTALL_DIR=$HOME/.local/bin` — install somewhere other than `/usr/local/bin`.
+
+### Windows — Scoop
+
+```powershell
+scoop bucket add shire-studio https://github.com/shire-studio/scoop-bucket
+scoop install webhookhub
+```
+
+### From source (any platform)
+
+```bash
 go install github.com/shire-studio/webhookhub-cli/cmd/webhookhub@latest
 ```
 
