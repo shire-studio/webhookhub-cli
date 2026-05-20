@@ -1,0 +1,13 @@
+# Binaries
+/webhookhub
+# GoReleaser snapshot/release output
+/dist/
+
+# Test/coverage
+*.out
+coverage.txt
+
+# Editor
+.vscode/
+.idea/
+.DS_Store
